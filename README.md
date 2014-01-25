@@ -15,7 +15,17 @@ to make this task less onerous, so
 
 ## basic usage
 
-`gitgit repo add <REPO>` introduces `gitgit` to a repository.
+### `gitgit repo`
+
+- `gitgit repo add <PATH>` introduces `gitgit` to a repository.
+
+- `gitgit repo rm <PATH>` removes a repository from `gitgit`'s configuration.
+
+- `gitgit repo list` lists all known repositories.
+
+- `gitgit repo list [NEWNAME]` changes the nickname for a repository
+
+### `gitgit push`
 
 `gitgit push` loops through all known repositories and
 
@@ -23,10 +33,11 @@ to make this task less onerous, so
 
 - for each dirty repository, displays a message.
 
+### `gitgit pull`
+
 `gitgit pull` loops through all known repositories and does the same thing,
 but pulls from `origin` instead.
 
-`gitgit repo rm <PATH>` removes a repository from `gitgit`'s configuration.
 
 ## configuration
 

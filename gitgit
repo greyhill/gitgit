@@ -2,15 +2,86 @@
 
 import argparse
 import sys
+import os
+import configparser
+
+class Config(object):
+    def __init__(self, path):
+        self.path = os.path.expanduser(path)
+        if os.path.exists(self.path):
+            parser = configparser.ConfigParser()
+            parser.read(self.path)
+
+            # read repos
+            nick_path_tuples = parser.items('repos')
+            self.repos = [ list(x) for x in nick_path_tuples ]
+        else:
+            print('new gitgit config at "%s"' % self.path)
+            # TODO -- setup defaults
+            self.repos = []
+
+    def save(self):
+        parser = configparser.ConfigParser()
+        parser.add_section('repos')
+        for nickname, path in self.repos:
+            parser.set('repos', nickname, path)
+        with open('%s' % self.path, 'w') as f:
+            parser.write(f)
+
+    def has_path(self, path):
+        path = os.path.realpath(path)
+        return any([ x[1] == path for x in self.repos ])
+
+    def add_path(self, new_path, nickname = None):
+        if nickname is None:
+            realpath = os.path.realpath(new_path)
+            nick = os.path.split(realpath)[-1]
+        else:
+            nick = nickname
+        self.repos.append([nick, os.path.realpath(new_path)])
+
+    def get_nick(self, rpath):
+        rpath = os.path.realpath(rpath)
+        for n, (nick, path) in enumerate(self.repos):
+            if path == rpath: return nick
+        raise ValueError('unknown repository: "%s"' % rpath)
+
+    def change_nick(self, rpath, new_nick):
+        rpath = os.path.realpath(rpath)
+        for n, (nick, path) in enumerate(self.repos):
+            if path == rpath: self.repos[n][0] = new_nick
+            return
+        raise ValueError('unknown repository: "%s"' % rpath)
 
 def do_repo(args):
     args.subfunc(args)
 
 def do_repo_add(args):
-    print('repo add', args.path)
+    config = Config(args.config)
+    new_path = args.path
+    if config.has_path(new_path):
+        print('gitgit is already watching "%s"' % new_path)
+    else:
+        config.add_path(new_path)
+        print('gitgit now watching "%s"' % new_path)
+        config.save()
 
 def do_repo_rm(args):
     print('repo rm', args.path)
+
+def do_repo_list(args):
+    config = Config(args.config)
+    print('watched repositories:')
+    for nick, path in config.repos:
+        print('{:<30}\t{:<30}'.format(nick, path))
+
+def do_repo_nick(args):
+    config = Config(args.config)
+    oldname = config.get_nick(args.path)
+    config.change_nick(args.path, args.nickname)
+    print('changed nickname of repo at "%s" to "%s" (from "%s")' \
+            % (args.path, args.nickname, oldname))
+    config.save()
 
 def do_pull(args):
     print('pull', args)
@@ -25,6 +96,9 @@ if __name__ == '__main__':
             description = 'git getting utility')
     subparsers = root_parser.add_subparsers()
 
+    root_parser.add_argument('--config', type=str, default='~/.gitgitrc')
+
+    # {{{ repo setup
     repo_parser = subparsers.add_parser('repo', help='respository to gitgit')
     repo_parser.set_defaults(func = do_repo)
     repo_sub = repo_parser.add_subparsers()
@@ -35,13 +109,25 @@ if __name__ == '__main__':
     repo_rm = repo_sub.add_parser('rm', help='remove repository')
     repo_rm.set_defaults(subfunc = do_repo_rm)
 
-    repo_parser.add_argument('path', type=str, default = '.')
+    repo_list = repo_sub.add_parser('list', help='list watched repositories')
+    repo_list.set_defaults(subfunc = do_repo_list)
 
+    repo_nick = repo_sub.add_parser('nick', help='change nickname')
+    repo_nick.set_defaults(subfunc = do_repo_nick)
+    repo_nick.add_argument('nickname', type=str)
+
+    repo_parser.add_argument('--path', type=str, default = '.')
+    # }}}
+
+    # {{{ pull setup
     pull_parser = subparsers.add_parser('pull', help='pull tracked repositories')
     pull_parser.set_defaults(func = do_pull)
+    # }}}
 
+    # {{{ push setup
     push_parser = subparsers.add_parser('push', help='push tracked repositories')
     push_parser.set_defaults(func = do_push)
+    # }}}
 
     args = root_parser.parse_args(sys.argv[1:])
     args.func(args)
