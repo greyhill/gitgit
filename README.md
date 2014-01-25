@@ -41,6 +41,3 @@ this for a particular call with the `--config /some/other/rcpath` flag.
 `gitgit pull` loops through all known repositories and does the same thing,
 but pulls from `origin` instead.
 
-
-## configuration
-
