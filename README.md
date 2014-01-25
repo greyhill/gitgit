@@ -15,15 +15,18 @@ to make this task less onerous, so
 
 ## basic usage
 
+By default `gitgit` stores its configuration in `~/.gitgitrc`.  You can change
+this for a particular call with the `--config /some/other/rcpath` flag.
+
 ### `gitgit repo`
 
-- `gitgit repo add <PATH>` introduces `gitgit` to a repository.
+- `gitgit repo add [PATH=.]` introduces `gitgit` to a repository.
 
-- `gitgit repo rm <PATH>` removes a repository from `gitgit`'s configuration.
+- `gitgit repo rm [PATH=.]` removes a repository from `gitgit`'s configuration.
 
 - `gitgit repo list` lists all known repositories.
 
-- `gitgit repo list [NEWNAME]` changes the nickname for a repository
+- `gitgit repo list NEWNAME` changes the nickname for a repository
 
 ### `gitgit push`
 
